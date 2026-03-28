@@ -1,0 +1,11 @@
+.antigravity/
+.cursor/
+.env
+venv/
+__pycache__/
+*.pyc
+infra/*.json
+data/
+*.parquet
+.DS_Store
+*.log
