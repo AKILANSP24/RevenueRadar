@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import time
 import logging
 from datetime import datetime
@@ -39,10 +38,19 @@ daily_stats = {
     "zscore_sum": 0.0
 }
 
+# Deduplication: track already-processed event_ids in memory
+processed_event_ids = set()
+
 
 def process_event(raw: dict) -> None:
-    """Processes a single raw event through the full pipeline."""
     global daily_stats
+
+    # --- Deduplication check ---
+    event_id = raw.get("event_id")
+    if event_id and event_id in processed_event_ids:
+        return
+    if event_id:
+        processed_event_ids.add(event_id)
 
     try:
         event = validate_event(raw)
@@ -62,8 +70,8 @@ def process_event(raw: dict) -> None:
 
     logger.info(
         f"[{severity.upper()}] {event.source} | "
-        f"Rs.{event.amount} | Z={zscore:.2f} | "
-        f"Baseline=Rs.{baseline_stats['mean']:.2f}"
+        f"${event.amount:.2f} | Z={zscore:.2f} | "
+        f"Baseline=${baseline_stats['mean']:.2f}"
     )
 
     enriched = {
@@ -74,11 +82,11 @@ def process_event(raw: dict) -> None:
         "severity": severity,
         "z_score": zscore,
         "baseline_mean": baseline_stats["mean"],
-        "baseline_std": baseline_stats["std"]
+        "baseline_std": baseline_stats["std"],
+        "ai_explanation": None
     }
 
     buffer.add_event(enriched)
-
     daily_stats["total_events"] += 1
 
     if severity in ("warning", "critical"):
@@ -87,11 +95,13 @@ def process_event(raw: dict) -> None:
 
         if severity == "critical":
             daily_stats["critical_count"] += 1
-            explanation = explain_anomaly(enriched, zscore, baseline_stats)
-            enriched["ai_explanation"] = explanation
-            logger.info(f"AI: {explanation}")
         else:
             daily_stats["warning_count"] += 1
+
+        # AI explanation for BOTH warning and critical
+        explanation = explain_anomaly(enriched, zscore, baseline_stats)
+        enriched["ai_explanation"] = explanation
+        logger.info(f"AI: {explanation}")
 
         insert_anomaly_event(enriched)
 
@@ -111,7 +121,6 @@ def process_event(raw: dict) -> None:
 
 
 def main():
-    """Main entry point. Polls Supabase raw_events for new records."""
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_KEY")
 
