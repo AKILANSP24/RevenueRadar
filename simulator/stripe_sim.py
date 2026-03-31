@@ -48,7 +48,7 @@ def run_stripe_sim():
     load_dotenv()
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_KEY")
-    anomaly_rate = float(os.getenv("SIM_ANOMALY_INJECTION_RATE", 0.04))
+    anomaly_rate = float(os.getenv("SIM_ANOMALY_INJECTION_RATE", 0.06))
 
     client = None
     if create_client and supabase_url and supabase_key:
@@ -61,7 +61,7 @@ def run_stripe_sim():
     if not client:
         logger.warning("Stripe Sim: Running in Dry-Run Mode.")
 
-    event_types = ["charge", "subscription", "refund"]
+    event_types = ["charge", "subscription"]
     plan_tiers = ["basic", "pro", "enterprise", "one_time"]
     regions = ["US", "IN", "EU", "UK", "CA"]
     logger.info("Stripe Simulator started.")

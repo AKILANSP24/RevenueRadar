@@ -45,7 +45,7 @@ def run_paypal_sim():
     load_dotenv()
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_KEY")
-    anomaly_rate = float(os.getenv("SIM_ANOMALY_INJECTION_RATE", 0.04))
+    anomaly_rate = float(os.getenv("SIM_ANOMALY_INJECTION_RATE", 0.06))
 
     client = None
     if create_client and supabase_url and supabase_key:

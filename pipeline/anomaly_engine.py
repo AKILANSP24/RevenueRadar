@@ -83,7 +83,7 @@ class AnomalyEngine:
         stats = self.get_baseline_stats(hour, day)
         
         # Cold start logic
-        if stats["count"] < 5 or stats["std"] == 0.0:
+        if stats["count"] < 3 or stats["std"] == 0.0:
             return 0.0
             
         z_score = (value - stats["mean"]) / stats["std"]
